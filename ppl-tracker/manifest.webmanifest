@@ -1,0 +1,21 @@
+{
+  "name": "Iron — Push / Pull / Legs",
+  "short_name": "Iron",
+  "description": "A personal push/pull/legs training coach: builds your week, guides every rep, and tracks progress — fully offline.",
+  "id": "./?source=pwa",
+  "start_url": "./?source=pwa",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait",
+  "background_color": "#141317",
+  "theme_color": "#141317",
+  "categories": ["health", "fitness", "sports", "lifestyle"],
+  "lang": "en",
+  "dir": "ltr",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
