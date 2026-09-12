@@ -71,3 +71,27 @@ It then launches full screen, with its own icon, and runs with no internet.
 All changes are covered by an automated test suite (plan generator invariants across
 every split, home/no-equipment and injury filters, the fixes above, and a render
 smoke-test of every screen).
+
+## Warm & human visual identity
+
+- New type system bundled offline: **Fredoka** (rounded display) + **Nunito** (body),
+  inlined as woff2 so they work with no network; rounded system fallback for instant load.
+- Warm palette in both themes — cozy brown-black dark, warm-paper light — with a coral
+  primary, honey and mint secondaries, and softer/rounder cards and shadows.
+- Confetti when you finish a session (bigger + multicolour on a PR), friendlier
+  illustrated empty states, and a **weekly-volume** bar chart in Stats.
+
+## Muscle-aware exercise animation
+
+Every animated demo (and the in-set rep counter) now answers three questions at a glance:
+
+- **What moves** — a mint direction arrow tracks the moving hand/hip and reverses on the
+  way down; joint dots mark the working elbow/knee/hip.
+- **Where you feel it** — the working muscle glows in coral on the body, brightest at peak
+  contraction (weights are gold, so muscle / load / motion read as three distinct things).
+- **How fast** — the rep pauses and "squeezes" at the top, tempo-synced to your counter
+  (up → hold → lower → reset), with a plain-language legend under the demo.
+
+The overlay is generated from the exercise's movement pattern, so it scales to the whole
+library rather than being hand-drawn per exercise. Verified with rendered snapshots and
+an extended test suite (221 assertions).
