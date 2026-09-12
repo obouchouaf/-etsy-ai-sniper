@@ -113,3 +113,18 @@ groups (biceps vs triceps, quads vs hamstrings, pecs, delts, lats, glutes, abs, 
 labelled on the body, and they **flex and brighten live with each rep** (bulge + glow at
 the squeeze, ease at the stretch), driven by the same repCycle. So you can tell exactly
 which muscle is working, and watch it work, while you train.
+
+## One realistic body, everywhere
+
+The stick figure is gone. The app now uses a single anatomical figure throughout —
+a connected body silhouette with gradient-shaded muscles and fibre striations:
+
+- **Rep counter** — the body is the animation, flexing/glowing live with each rep.
+- **Exercise demo** — the same body flexes at your chosen tempo (play/pause), above the
+  what-moves / where / how-fast legend and the form cues.
+- **Thumbnails** — a mini body that lights the target muscle (auto front/back), so a
+  glance down a list tells you what each exercise trains.
+- **Onboarding** — a clean neutral body as the hero.
+
+More realism: connected silhouette (muscles no longer float), radial/linear gradients for
+volume, and striation lines on the big groups. Muscle differentiation stays exact.
