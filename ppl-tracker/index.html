@@ -308,6 +308,21 @@ svg.figsvg .arw.h{fill:var(--mint);stroke:none}
 .al{display:flex;gap:11px;align-items:flex-start;font-size:12.5px;color:var(--dim);line-height:1.42}
 .al b{display:block;color:var(--ink);font-weight:800;font-size:11.5px}
 .ak{width:12px;height:12px;border-radius:4px;flex:0 0 auto;margin-top:3px;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 0%,transparent)}
+
+/* ═══ muscle map ═══ */
+.muscles{background:var(--surface-2);border-radius:16px;padding:12px 12px 10px;margin:4px 0 13px}
+svg.mmap{width:100%;height:172px;display:block;margin:2px 0 10px}
+svg.mmap .mm{stroke:var(--line);stroke-width:.5}
+svg.mmap .base{fill:color-mix(in srgb,var(--ink) 20%,var(--surface))}
+svg.mmap .neu{fill:color-mix(in srgb,var(--ink) 9%,var(--surface))}
+svg.mmap .sec{fill:color-mix(in srgb,var(--gold) 80%,var(--surface))}
+svg.mmap .pri{fill:var(--accent)}
+svg.mmap .lbl{fill:var(--dim);font:6px var(--font);text-anchor:middle;font-weight:700;letter-spacing:.06em}
+.mlist{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:center}
+.mtag{font-size:11.5px;font-weight:800;padding:3px 10px;border-radius:99px}
+.mtag.pri{background:var(--accent);color:#fff}
+.mtag.sec{background:color-mix(in srgb,var(--gold) 24%,var(--surface));color:var(--ink);border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
+.msep{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:0 1px}
 </style>
 </head>
 <body>
@@ -1391,8 +1406,81 @@ const MOVES={h_press:"Elbows and shoulders press the weight away from the chest"
   glute:"Hips drive up to full extension",
   calves:"Ankles push up onto the toes",
   core:"The trunk curls and braces"};
+const MNAME={chest:"Chest",front_delt:"Front delts",side_delt:"Side delts",rear_delt:"Rear delts",
+  biceps:"Biceps",triceps:"Triceps",forearm:"Forearms",abs:"Abs",obliques:"Obliques",lats:"Lats",
+  traps:"Traps",lower_back:"Lower back",glutes:"Glutes",quads:"Quads",hamstrings:"Hamstrings",
+  calves:"Calves",adductors:"Inner thigh"};
+const MUSC_SLOT={
+  h_press:{p:["chest"],s:["front_delt","triceps"]}, chest_iso:{p:["chest"],s:["front_delt"]},
+  v_press:{p:["front_delt"],s:["side_delt","triceps"]}, side_delt:{p:["side_delt"],s:[]},
+  triceps:{p:["triceps"],s:[]}, v_pull:{p:["lats"],s:["biceps","rear_delt"]},
+  h_pull:{p:["lats","traps"],s:["biceps","rear_delt"]}, lat_iso:{p:["lats"],s:["rear_delt"]},
+  rear_delt:{p:["rear_delt"],s:["traps"]}, biceps:{p:["biceps"],s:["forearm"]},
+  squat:{p:["quads","glutes"],s:["adductors","lower_back"]}, quad_iso:{p:["quads"],s:[]},
+  hinge:{p:["hamstrings","glutes"],s:["lower_back"]}, ham_iso:{p:["hamstrings"],s:["glutes"]},
+  glute:{p:["glutes"],s:["hamstrings"]}, calves:{p:["calves"],s:[]}, core:{p:["abs"],s:["obliques"]}};
+const MUSC_EX={
+  inc_db:{p:["chest","front_delt"],s:["triceps"]}, pushup_dec:{p:["chest","front_delt"],s:["triceps"]},
+  dip:{p:["chest","triceps"],s:["front_delt"]}, chin_up:{p:["lats","biceps"],s:["rear_delt"]},
+  hammer:{p:["biceps","forearm"],s:[]}, incline_curl:{p:["biceps"],s:["forearm"]},
+  shrug:{p:["traps"],s:[]}, face_pull:{p:["rear_delt"],s:["traps"]}, band_face:{p:["rear_delt"],s:["traps"]},
+  deadlift:{p:["hamstrings","glutes","lower_back"],s:["traps","quads"]}, rdl:{p:["hamstrings"],s:["glutes","lower_back"]},
+  sl_rdl:{p:["hamstrings"],s:["glutes"]}, good_morning:{p:["hamstrings","lower_back"],s:["glutes"]},
+  hip_thrust:{p:["glutes"],s:["hamstrings"]}, glute_bridge:{p:["glutes"],s:["hamstrings"]},
+  leg_ext:{p:["quads"],s:[]}, leg_curl:{p:["hamstrings"],s:[]}, nordic:{p:["hamstrings"],s:[]},
+  goblet_squat:{p:["quads","glutes"],s:["adductors"]}, bulgarian:{p:["quads","glutes"],s:["adductors"]},
+  lunge:{p:["quads","glutes"],s:[]}, step_up:{p:["quads","glutes"],s:[]}, sissy_split:{p:["quads"],s:[]},
+  pike_pushup:{p:["front_delt"],s:["triceps"]}, diamond_pushup:{p:["triceps"],s:["chest"]},
+  chair_dip:{p:["triceps"],s:["front_delt"]}, oh_tri:{p:["triceps"],s:[]}, skullcrusher:{p:["triceps"],s:[]},
+  ab_wheel:{p:["abs"],s:["obliques"]}, leg_raise:{p:["abs"],s:[]}, dead_bug:{p:["abs"],s:["obliques"]},
+  superman:{p:["lower_back"],s:["glutes","rear_delt"]}, calf:{p:["calves"],s:[]}, sa_pull:{p:["lats"],s:[]}};
+function musclesFor(id){ const ex=getEx(id)||BY_ID[id]||{}; return MUSC_EX[id]||MUSC_SLOT[ex.slot]||{p:[],s:[]}; }
+/* front + back muscle silhouettes (0..120 x, 0..170 y each) */
+const BODY_A={
+  head:'<circle cx="60" cy="14" r="10"/>', neck:'<rect x="54" y="21" width="12" height="9" rx="3"/>',
+  delt_f:'<ellipse cx="37" cy="37" rx="9" ry="8"/><ellipse cx="83" cy="37" rx="9" ry="8"/>',
+  chest:'<path d="M59 43h-16a4 4 0 0 0-4 4v8a5 5 0 0 0 5 5h13z"/><path d="M61 43h16a4 4 0 0 1 4 4v8a5 5 0 0 1-5 5h-13z"/>',
+  biceps:'<ellipse cx="30" cy="52" rx="6" ry="11"/><ellipse cx="90" cy="52" rx="6" ry="11"/>',
+  forearm:'<ellipse cx="25" cy="72" rx="5" ry="12"/><ellipse cx="95" cy="72" rx="5" ry="12"/>',
+  hands:'<circle cx="23" cy="88" r="4"/><circle cx="97" cy="88" r="4"/>',
+  abs:'<rect x="52" y="61" width="16" height="22" rx="4"/>',
+  obliques:'<path d="M50 61q-4 8-2 18l4-1v-17z"/><path d="M70 61q4 8 2 18l-4-1v-17z"/>',
+  quads:'<ellipse cx="51" cy="104" rx="8.5" ry="19"/><ellipse cx="69" cy="104" rx="8.5" ry="19"/>',
+  adductors:'<ellipse cx="60" cy="100" rx="4" ry="14"/>',
+  knees:'<circle cx="51" cy="127" r="5"/><circle cx="69" cy="127" r="5"/>',
+  shin:'<ellipse cx="51" cy="145" rx="6" ry="15"/><ellipse cx="69" cy="145" rx="6" ry="15"/>',
+  feet:'<path d="M45 161h9v5h-11z"/><path d="M75 161h-9v5h11z"/>'};
+const BODY_B={
+  head:'<circle cx="60" cy="14" r="10"/>',
+  traps:'<path d="M60 30 78 40 72 54 60 50 48 54 42 40z"/>',
+  delt_b:'<ellipse cx="37" cy="38" rx="9" ry="8"/><ellipse cx="83" cy="38" rx="9" ry="8"/>',
+  triceps:'<ellipse cx="30" cy="53" rx="6" ry="11"/><ellipse cx="90" cy="53" rx="6" ry="11"/>',
+  forearm:'<ellipse cx="25" cy="72" rx="5" ry="12"/><ellipse cx="95" cy="72" rx="5" ry="12"/>',
+  hands:'<circle cx="23" cy="88" r="4"/><circle cx="97" cy="88" r="4"/>',
+  lats:'<path d="M58 52 46 56 43 70 58 66z"/><path d="M62 52 74 56 77 70 62 66z"/>',
+  lower_back:'<rect x="54" y="68" width="12" height="15" rx="3"/>',
+  glutes:'<path d="M59 86q-11 0-11 9t8 9 4-7z"/><path d="M61 86q11 0 11 9t-8 9-4-7z"/>',
+  hamstrings:'<ellipse cx="51" cy="112" rx="8" ry="17"/><ellipse cx="69" cy="112" rx="8" ry="17"/>',
+  knees:'<circle cx="51" cy="129" r="5"/><circle cx="69" cy="129" r="5"/>',
+  calves:'<ellipse cx="51" cy="145" rx="7" ry="15"/><ellipse cx="69" cy="145" rx="7" ry="15"/>',
+  feet:'<path d="M45 161h9v5h-11z"/><path d="M75 161h-9v5h11z"/>'};
+const NEU_M=new Set(["head","neck","hands","knees","feet","shin"]);
+function _expandM(list){ const s=new Set(); (list||[]).forEach(m=>{
+  if(m==="side_delt"||m==="front_delt") s.add("delt_f"); else if(m==="rear_delt") s.add("delt_b"); else s.add(m); }); return s; }
+function _figM(shapes,pri,sec){ return Object.entries(shapes).map(([id,g])=>{
+  const cls=pri.has(id)?"pri":sec.has(id)?"sec":NEU_M.has(id)?"neu":"base";
+  return g.replace(/<(circle|ellipse|rect|path|polygon)/g,`<$1 class="mm ${cls}"`); }).join(""); }
+function bodyMap(primary,secondary){ const pri=_expandM(primary), sec=_expandM(secondary);
+  return `<svg class="mmap" viewBox="0 0 250 178" preserveAspectRatio="xMidYMid meet">
+    <g>${_figM(BODY_A,pri,sec)}<text class="lbl" x="60" y="176">FRONT</text></g>
+    <g transform="translate(130,0)">${_figM(BODY_B,pri,sec)}<text class="lbl" x="60" y="176">BACK</text></g></svg>`; }
+function muscleBlock(id){ const m=musclesFor(id); if(!m.p.length&&!m.s.length) return "";
+  const tag=(x,c)=>`<span class="mtag ${c}">${esc(MNAME[x]||x)}</span>`;
+  const sec=m.s.length?`<span class="msep">assisted</span>`+m.s.map(x=>tag(x,"sec")).join(""):"";
+  return `<div class="muscles"><div class="mus" style="text-align:center">Muscles worked</div>
+    ${bodyMap(m.p,m.s)}<div class="mlist">${m.p.map(x=>tag(x,"pri")).join("")}${sec}</div></div>`; }
 function anatomyLegend(id){ const ex=getEx(id)||BY_ID[id]||{}, q=CUES[id]||{};
-  const feel=q.m||ex.mus||ex.pat||"the working muscle";
+  const feel=(musclesFor(id).p.map(x=>MNAME[x]||x).join(" · "))||q.m||ex.mus||"the working muscle";
   const moves=MOVES[ex.slot]||"The working joint bends and straightens";
   const t=S.settings.tempo;
   return `<div class="alegend">
@@ -1411,6 +1499,7 @@ function figBlock(id){
       <input type="range" min="0" max="100" value="0" data-figscrub>
       <button class="step" data-demo="${id}">${ic("i-book","sm")}</button>
     </div></div>
+    ${muscleBlock(id)}
     ${anatomyLegend(id)}
     ${q?q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join(""):""}`;
 }
@@ -2128,6 +2217,7 @@ function openDemo(id){ const ex=getEx(id)||{}, q=CUES[id]||{c:[]};
       <div class="ctl"><button class="step" data-figplay>${ic("i-pause","sm")}</button>
       <input type="range" min="0" max="100" value="0" data-figscrub></div></div>
     <div class="chips" style="margin-bottom:12px">${[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s / rep</button>`).join("")}</div>
+    ${muscleBlock(id)}
     ${anatomyLegend(id)}
     ${q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join("")}
     ${ex.s?`<p class="sub" style="margin-top:10px">${ex.s} × ${ex.lo}–${ex.hi} · rest ${ex.rest}s · steps of ${ex.inc} ${U()}</p>`:""}

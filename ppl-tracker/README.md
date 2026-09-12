@@ -95,3 +95,12 @@ Every animated demo (and the in-set rep counter) now answers three questions at 
 The overlay is generated from the exercise's movement pattern, so it scales to the whole
 library rather than being hand-drawn per exercise. Verified with rendered snapshots and
 an extended test suite (221 assertions).
+
+## Precise muscle map (front + back)
+
+Alongside the movement animation, every demo now shows an anatomical **Muscles worked**
+chart — front and back figures with the real muscle groups. The exercise's target muscles
+light up in coral (primary) and gold (assisting), with names, so "where you feel it" is
+exact rather than indicative. Mapping is per movement pattern with per-exercise overrides
+(e.g. chin-ups bias biceps, RDLs bias hamstrings, incline press adds upper chest / front
+delts). Every library exercise resolves to at least one primary muscle (checked in tests).
