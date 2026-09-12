@@ -104,3 +104,12 @@ light up in coral (primary) and gold (assisting), with names, so "where you feel
 exact rather than indicative. Mapping is per movement pattern with per-exercise overrides
 (e.g. chin-ups bias biceps, RDLs bias hamstrings, incline press adds upper chest / front
 delts). Every library exercise resolves to at least one primary muscle (checked in tests).
+
+## The animation *is* the muscle body (in the counter)
+
+During a set the rep counter no longer shows a stick figure — it shows the detailed
+front/back muscular body itself. The working muscles are drawn with real, differentiated
+groups (biceps vs triceps, quads vs hamstrings, pecs, delts, lats, glutes, abs, calves…),
+labelled on the body, and they **flex and brighten live with each rep** (bulge + glow at
+the squeeze, ease at the stretch), driven by the same repCycle. So you can tell exactly
+which muscle is working, and watch it work, while you train.

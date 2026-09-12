@@ -332,6 +332,17 @@ svg.mmap .lbl{fill:var(--dim);font:6px var(--font);text-anchor:middle;font-weigh
 .cmuscle .mtag{font-size:10px;padding:2px 8px;font-weight:800}
 .cmuscle .msep{font-size:9px}
 #counter .stage{min-height:150px}
+
+/* ═══ detailed anatomy: glow, flex, labels ═══ */
+svg.mmap .line{fill:none;stroke:color-mix(in srgb,var(--ink) 30%,var(--surface));stroke-width:.9}
+svg.mmap .glow{fill:var(--accent);opacity:.20;transform-box:fill-box;transform-origin:center;transform:scale(1.3)}
+svg.mmap .mlab{fill:#fff;font:6px var(--font);font-weight:800;text-anchor:middle;paint-order:stroke;stroke:rgba(0,0,0,.5);stroke-width:1.6}
+#cFigWrap.flexbody{position:absolute;width:min(84vw,340px);height:min(60vh,260px)}
+#cFigWrap.flexbody svg.mmap{height:100%}
+#cFigWrap.flexbody svg.mmap .pri{opacity:calc(.45 + .55*var(--k,1))}
+#cFigWrap.flexbody svg.mmap .pri.flex{transform-box:fill-box;transform-origin:center;transform:scale(var(--flex,1))}
+#cFigWrap.flexbody svg.mmap .glow{opacity:calc(.06 + .32*var(--k,1));transform:scale(calc(1.12 + .3*var(--k,1)))}
+#cFigWrap.flexbody svg.mmap .mlab{font-size:6.6px}
 </style>
 </head>
 <body>
@@ -382,13 +393,12 @@ svg.mmap .lbl{fill:var(--dim);font:6px var(--font);text-anchor:middle;font-weigh
     <div style="flex:1"><div class="nm" id="cName">—</div><div class="sb" id="cSub">—</div></div>
     <button class="iconbtn" id="cClose"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
-  <div class="cmuscle" id="cMuscle" hidden></div>
   <div class="stage">
     <svg class="arc" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="var(--line)" stroke-width="4"/>
       <circle id="cArc" cx="60" cy="60" r="54" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"
         stroke-dasharray="339.3" stroke-dashoffset="339.3" style="transition:stroke-dashoffset .3s"/></svg>
     <div class="pulse" id="cPulse"></div>
-    <div id="cFigWrap" class="figbox"></div>
+    <div id="cFigWrap"></div>
     <button class="tapzone" id="cTap" aria-label="Tap to count a rep"></button>
   </div>
   <div class="readout" id="cRead">
@@ -1448,47 +1458,60 @@ function musclesFor(id){ const ex=getEx(id)||BY_ID[id]||{}; return MUSC_EX[id]||
 /* front + back muscle silhouettes (0..120 x, 0..170 y each) */
 const BODY_A={
   head:'<circle cx="60" cy="14" r="10"/>', neck:'<rect x="54" y="21" width="12" height="9" rx="3"/>',
-  delt_f:'<ellipse cx="37" cy="37" rx="9" ry="8"/><ellipse cx="83" cy="37" rx="9" ry="8"/>',
-  chest:'<path d="M59 43h-16a4 4 0 0 0-4 4v8a5 5 0 0 0 5 5h13z"/><path d="M61 43h16a4 4 0 0 1 4 4v8a5 5 0 0 1-5 5h-13z"/>',
-  biceps:'<ellipse cx="30" cy="52" rx="6" ry="11"/><ellipse cx="90" cy="52" rx="6" ry="11"/>',
-  forearm:'<ellipse cx="25" cy="72" rx="5" ry="12"/><ellipse cx="95" cy="72" rx="5" ry="12"/>',
-  hands:'<circle cx="23" cy="88" r="4"/><circle cx="97" cy="88" r="4"/>',
-  abs:'<rect x="52" y="61" width="16" height="22" rx="4"/>',
-  obliques:'<path d="M50 61q-4 8-2 18l4-1v-17z"/><path d="M70 61q4 8 2 18l-4-1v-17z"/>',
-  quads:'<ellipse cx="51" cy="104" rx="8.5" ry="19"/><ellipse cx="69" cy="104" rx="8.5" ry="19"/>',
-  adductors:'<ellipse cx="60" cy="100" rx="4" ry="14"/>',
-  knees:'<circle cx="51" cy="127" r="5"/><circle cx="69" cy="127" r="5"/>',
-  shin:'<ellipse cx="51" cy="145" rx="6" ry="15"/><ellipse cx="69" cy="145" rx="6" ry="15"/>',
-  feet:'<path d="M45 161h9v5h-11z"/><path d="M75 161h-9v5h11z"/>'};
+  delt_f:'<path d="M47 31C39 31 32 35 32 43C32 48 37 49 42 46C46 43 48 37 47 31Z"/><path d="M73 31C81 31 88 35 88 43C88 48 83 49 78 46C74 43 72 37 73 31Z"/>',
+  chest:'<path d="M59 43H45C41 43 38 46 38 51C38 57 43 61 51 61H59Z"/><path d="M61 43H75C79 43 82 46 82 51C82 57 77 61 69 61H61Z"/>',
+  biceps:'<ellipse cx="30" cy="52" rx="6.5" ry="12"/><ellipse cx="90" cy="52" rx="6.5" ry="12"/>',
+  forearm:'<path d="M27 62C23 66 22 74 24 83L28 82C29 74 30 67 31 63Z"/><path d="M93 62C97 66 98 74 96 83L92 82C91 74 90 67 89 63Z"/>',
+  hands:'<circle cx="26" cy="87" r="3.6"/><circle cx="94" cy="87" r="3.6"/>',
+  abs:'<path d="M53 60H67V80C67 83 61 85 60 85C59 85 53 83 53 80Z"/>',
+  absline:'<path class="mm line" d="M60 61V83M54 67H66M54 73H66M54 79H65"/>',
+  obliques:'<path d="M52 61C48 68 48 76 50 82L53 81V61Z"/><path d="M68 61C72 68 72 76 70 82L67 81V61Z"/>',
+  quads:'<path d="M52 95C46 96 45 106 46 115C47 123 50 126 53 125C55 121 56 106 55 99Z"/><path d="M68 95C74 96 75 106 74 115C73 123 70 126 67 125C65 121 64 106 65 99Z"/>',
+  adductors:'<path d="M57 97C59 99 61 99 63 97L62 116C60 118 60 118 58 116Z"/>',
+  knees:'<circle cx="51" cy="128" r="5"/><circle cx="69" cy="128" r="5"/>',
+  shin:'<ellipse cx="51" cy="146" rx="6" ry="15"/><ellipse cx="69" cy="146" rx="6" ry="15"/>',
+  feet:'<path d="M45 162h9v5h-11z"/><path d="M75 162h-9v5h11z"/>'};
 const BODY_B={
   head:'<circle cx="60" cy="14" r="10"/>',
-  traps:'<path d="M60 30 78 40 72 54 60 50 48 54 42 40z"/>',
-  delt_b:'<ellipse cx="37" cy="38" rx="9" ry="8"/><ellipse cx="83" cy="38" rx="9" ry="8"/>',
-  triceps:'<ellipse cx="30" cy="53" rx="6" ry="11"/><ellipse cx="90" cy="53" rx="6" ry="11"/>',
-  forearm:'<ellipse cx="25" cy="72" rx="5" ry="12"/><ellipse cx="95" cy="72" rx="5" ry="12"/>',
-  hands:'<circle cx="23" cy="88" r="4"/><circle cx="97" cy="88" r="4"/>',
-  lats:'<path d="M58 52 46 56 43 70 58 66z"/><path d="M62 52 74 56 77 70 62 66z"/>',
-  lower_back:'<rect x="54" y="68" width="12" height="15" rx="3"/>',
-  glutes:'<path d="M59 86q-11 0-11 9t8 9 4-7z"/><path d="M61 86q11 0 11 9t-8 9-4-7z"/>',
-  hamstrings:'<ellipse cx="51" cy="112" rx="8" ry="17"/><ellipse cx="69" cy="112" rx="8" ry="17"/>',
-  knees:'<circle cx="51" cy="129" r="5"/><circle cx="69" cy="129" r="5"/>',
-  calves:'<ellipse cx="51" cy="145" rx="7" ry="15"/><ellipse cx="69" cy="145" rx="7" ry="15"/>',
-  feet:'<path d="M45 161h9v5h-11z"/><path d="M75 161h-9v5h11z"/>'};
+  traps:'<path d="M60 28L79 40C74 50 66 49 60 47C54 49 46 50 41 40Z"/>',
+  delt_b:'<path d="M47 32C39 32 32 36 32 44C32 49 37 50 42 47C46 44 48 38 47 32Z"/><path d="M73 32C81 32 88 36 88 44C88 49 83 50 78 47C74 44 72 38 73 32Z"/>',
+  triceps:'<ellipse cx="30" cy="53" rx="6.5" ry="12"/><ellipse cx="90" cy="53" rx="6.5" ry="12"/>',
+  forearm:'<path d="M27 63C23 67 22 75 24 84L28 83C29 75 30 68 31 64Z"/><path d="M93 63C97 67 98 75 96 84L92 83C91 75 90 68 89 64Z"/>',
+  hands:'<circle cx="26" cy="88" r="3.6"/><circle cx="94" cy="88" r="3.6"/>',
+  lats:'<path d="M57 51L45 55C43 63 45 71 49 76L57 67Z"/><path d="M63 51L75 55C77 63 75 71 71 76L63 67Z"/>',
+  lower_back:'<path d="M55 67C57 74 56 81 55 84H59V67ZM65 67C63 74 64 81 65 84H61V67Z"/>',
+  glutes:'<path d="M59 85C50 85 46 92 48 100C50 105 58 104 59 96Z"/><path d="M61 85C70 85 74 92 72 100C70 105 62 104 61 96Z"/>',
+  hamstrings:'<path d="M52 101C47 102 46 111 47 119C48 126 51 128 53 127C55 123 56 110 55 104Z"/><path d="M68 101C73 102 74 111 73 119C72 126 69 128 67 127C65 123 64 110 65 104Z"/>',
+  knees:'<circle cx="51" cy="130" r="5"/><circle cx="69" cy="130" r="5"/>',
+  calves:'<path d="M51 135C47 137 46 145 48 154C49 149 50 149 51 153C52 149 53 149 54 154C56 145 55 137 51 135Z"/><path d="M69 135C65 137 64 145 66 154C67 149 68 149 69 153C70 149 71 149 72 154C74 145 73 137 69 135Z"/>',
+  feet:'<path d="M45 162h9v5h-11z"/><path d="M75 162h-9v5h11z"/>'};
 const NEU_M=new Set(["head","neck","hands","knees","feet","shin"]);
 function _expandM(list){ const s=new Set(); (list||[]).forEach(m=>{
   if(m==="side_delt"||m==="front_delt") s.add("delt_f"); else if(m==="rear_delt") s.add("delt_b"); else s.add(m); }); return s; }
-function _figM(shapes,pri,sec){ return Object.entries(shapes).map(([id,g])=>{
-  const cls=pri.has(id)?"pri":sec.has(id)?"sec":NEU_M.has(id)?"neu":"base";
-  return g.replace(/<(circle|ellipse|rect|path|polygon)/g,`<$1 class="mm ${cls}"`); }).join(""); }
-function bodyMap(primary,secondary){ const pri=_expandM(primary), sec=_expandM(secondary);
+const MLAB={chest:"CHEST",front_delt:"DELTS",side_delt:"DELTS",biceps:"BICEPS",triceps:"TRICEPS",
+  forearm:"FOREARM",abs:"ABS",obliques:"OBLIQUES",quads:"QUADS",adductors:"INNER",rear_delt:"REAR DELT",
+  traps:"TRAPS",lats:"LATS",lower_back:"LOW BACK",glutes:"GLUTES",hamstrings:"HAMS",calves:"CALVES"};
+const MPOS={chest:{f:"A",x:50,y:52},front_delt:{f:"A",x:33,y:39},side_delt:{f:"A",x:33,y:39},
+  biceps:{f:"A",x:30,y:52},forearm:{f:"A",x:25,y:74},abs:{f:"A",x:60,y:71},obliques:{f:"A",x:50,y:72},
+  quads:{f:"A",x:51,y:106},adductors:{f:"A",x:60,y:106},triceps:{f:"B",x:30,y:53},rear_delt:{f:"B",x:33,y:39},
+  traps:{f:"B",x:60,y:40},lats:{f:"B",x:51,y:62},lower_back:{f:"B",x:60,y:76},glutes:{f:"B",x:60,y:93},
+  hamstrings:{f:"B",x:51,y:113},calves:{f:"B",x:51,y:145}};
+function _figM(shapes,pri,sec,flex){ return Object.entries(shapes).map(([id,g])=>{
+  if(/line$/.test(id)) return g;
+  const isP=pri.has(id), cls=isP?"pri":sec.has(id)?"sec":NEU_M.has(id)?"neu":"base";
+  const shape=g.replace(/<(circle|ellipse|rect|path|polygon)/g,`<$1 class="mm ${cls}${isP&&flex?" flex":""}"`);
+  return isP ? g.replace(/<(circle|ellipse|rect|path|polygon)/g,'<$1 class="mm glow"')+shape : shape; }).join(""); }
+function _labelsM(prim,side){ return (prim||[]).filter(m=>(MPOS[m]||{}).f===side).map(m=>{ const pp=MPOS[m];
+  const x=side==="B"?pp.x+130:pp.x; return `<text class="mlab" x="${x}" y="${pp.y+2}">${MLAB[m]||m.toUpperCase()}</text>`; }).join(""); }
+function bodyMap(primary,secondary,opts){ opts=opts||{}; const pri=_expandM(primary), sec=_expandM(secondary);
   return `<svg class="mmap" viewBox="0 0 250 178" preserveAspectRatio="xMidYMid meet">
-    <g>${_figM(BODY_A,pri,sec)}<text class="lbl" x="60" y="176">FRONT</text></g>
-    <g transform="translate(130,0)">${_figM(BODY_B,pri,sec)}<text class="lbl" x="60" y="176">BACK</text></g></svg>`; }
+    <g>${_figM(BODY_A,pri,sec,opts.flex)}${opts.labels?_labelsM(primary,"A"):""}<text class="lbl" x="60" y="176">FRONT</text></g>
+    <g transform="translate(130,0)">${_figM(BODY_B,pri,sec,opts.flex)}${opts.labels?_labelsM(primary,"B"):""}<text class="lbl" x="60" y="176">BACK</text></g></svg>`; }
 function muscleBlock(id){ const m=musclesFor(id); if(!m.p.length&&!m.s.length) return "";
   const tag=(x,c)=>`<span class="mtag ${c}">${esc(MNAME[x]||x)}</span>`;
   const sec=m.s.length?`<span class="msep">assisted</span>`+m.s.map(x=>tag(x,"sec")).join(""):"";
   return `<div class="muscles"><div class="mus" style="text-align:center">Muscles worked</div>
-    ${bodyMap(m.p,m.s)}<div class="mlist">${m.p.map(x=>tag(x,"pri")).join("")}${sec}</div></div>`; }
+    ${bodyMap(m.p,m.s,{labels:true})}<div class="mlist">${m.p.map(x=>tag(x,"pri")).join("")}${sec}</div></div>`; }
 function anatomyLegend(id){ const ex=getEx(id)||BY_ID[id]||{}, q=CUES[id]||{};
   const feel=(musclesFor(id).p.map(x=>MNAME[x]||x).join(" · "))||q.m||ex.mus||"the working muscle";
   const moves=MOVES[ex.slot]||"The working joint bends and straightens";
@@ -2089,14 +2112,13 @@ function openCounter(id,idx){
   Object.assign(rep,{exId:id,idx,count:0,active:false,paused:true,phase:"up",target:ex.hi});
   $("#cName").textContent=ex.n;
   $("#cSub").textContent=`Set ${idx+1} of ${ex.s} · target ${ex.lo}–${ex.hi} reps`;
-  { const mm=musclesFor(id), cm=$("#cMuscle");
-    if(cm){ if(mm.p.length||mm.s.length){ const tag=(x,c)=>`<span class="mtag ${c}">${esc(MNAME[x]||x)}</span>`;
-        cm.innerHTML=bodyMap(mm.p,mm.s)+`<div class="mlist">${mm.p.map(x=>tag(x,"pri")).join("")}</div>`;
-        cm.classList.add("live"); cm.style.setProperty("--k",".6"); cm.hidden=false; }
-      else { cm.innerHTML=""; cm.hidden=true; } } }
+  const _m=musclesFor(id), fw=$("#cFigWrap");
+  fw.classList.add("flexbody","live"); fw.dataset.fig="";
+  fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02");
+  fw.innerHTML=(_m.p.length||_m.s.length)?bodyMap(_m.p,_m.s,{labels:true,flex:true}):"";
+  const _pl=$("#cPulse"); if(_pl) _pl.style.display="none";
   $("#cTempo").innerHTML=[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s / rep</button>`).join("");
-  const fw=$("#cFigWrap"); fw.dataset.fig=hasFig(id)?id:""; fw.dataset.mode="loop"; fw.dataset.anat="1"; fw.innerHTML="";
-  drawW(); drawCounter(); pulse(.5); $("#counter").classList.add("on"); audio(); keepAwake(true); mountFigs();
+  drawW(); drawCounter(); $("#counter").classList.add("on"); audio(); keepAwake(true);
 }
 function drawW(){ const st=S.current.entries[rep.exId][rep.idx];
   $("#cW").innerHTML=`<button class="step" data-cw="-1">${ic("i-minus","sm")}</button>
@@ -2124,9 +2146,7 @@ function startLoop(){
 function loop(now){
   if(!rep.active||rep.paused) return;
   const T=Math.max(1600,S.settings.tempo*1000), el=now-rep.t0, c=repCycle(el,T);
-  pulse(.5+.5*c.t);
-  if(figFrame++%2===0) paintFig($("#cFigWrap"),rep.exId,c.t, c.phase==="up"?1:c.phase==="down"?-1:0);
-  { const cm=$("#cMuscle"); if(cm) cm.style.setProperty("--k",(0.28+0.72*c.t).toFixed(2)); }
+  { const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",(0.2+0.8*c.t).toFixed(2)); fw.style.setProperty("--flex",(1+0.13*c.t).toFixed(3)); } }
   if(c.phase!==rep._ph){
     if(c.phase==="hold") beep(660,70,.15); else if(c.phase==="down") beep(520,60,.12);
     rep._ph=c.phase;
@@ -2138,9 +2158,9 @@ function loop(now){
   rep.raf=requestAnimationFrame(loop);
 }
 function stopLoop(){ rep.paused=true; cancelAnimationFrame(rep.raf); clearInterval(rep.cd); $("#cCue").textContent="";
-  const cm=$("#cMuscle"); if(cm) cm.style.setProperty("--k",".6"); }
-function mflash(){ const cm=$("#cMuscle"); if(!cm) return; cm.style.setProperty("--k","1");
-  clearTimeout(cm._t); cm._t=setTimeout(()=>cm.style.setProperty("--k",".6"),190); }
+  const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02"); } }
+function mflash(){ const fw=$("#cFigWrap"); if(!fw) return; fw.style.setProperty("--k","1"); fw.style.setProperty("--flex","1.13");
+  clearTimeout(fw._t); fw._t=setTimeout(()=>{ fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02"); },200); }
 function finishSet(){
   stopLoop(); rep.active=false;
   if(!S.current){ $("#counter").classList.remove("on"); return; }
