@@ -323,6 +323,15 @@ svg.mmap .lbl{fill:var(--dim);font:6px var(--font);text-anchor:middle;font-weigh
 .mtag.pri{background:var(--accent);color:#fff}
 .mtag.sec{background:color-mix(in srgb,var(--gold) 24%,var(--surface));color:var(--ink);border:1px solid color-mix(in srgb,var(--gold) 45%,var(--line))}
 .msep{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.06em;margin:0 1px}
+
+/* ═══ live muscle strip in the rep counter ═══ */
+.cmuscle{margin:2px auto 0;max-width:330px;width:100%}
+.cmuscle .mmap{height:74px;margin:0}
+.cmuscle.live svg.mmap .pri{opacity:calc(.28 + .72*var(--k,1));transition:opacity .06s linear}
+.cmuscle .mlist{margin-top:3px;gap:5px}
+.cmuscle .mtag{font-size:10px;padding:2px 8px;font-weight:800}
+.cmuscle .msep{font-size:9px}
+#counter .stage{min-height:150px}
 </style>
 </head>
 <body>
@@ -373,6 +382,7 @@ svg.mmap .lbl{fill:var(--dim);font:6px var(--font);text-anchor:middle;font-weigh
     <div style="flex:1"><div class="nm" id="cName">—</div><div class="sb" id="cSub">—</div></div>
     <button class="iconbtn" id="cClose"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
+  <div class="cmuscle" id="cMuscle" hidden></div>
   <div class="stage">
     <svg class="arc" viewBox="0 0 120 120"><circle cx="60" cy="60" r="54" fill="none" stroke="var(--line)" stroke-width="4"/>
       <circle id="cArc" cx="60" cy="60" r="54" fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"
@@ -2079,6 +2089,11 @@ function openCounter(id,idx){
   Object.assign(rep,{exId:id,idx,count:0,active:false,paused:true,phase:"up",target:ex.hi});
   $("#cName").textContent=ex.n;
   $("#cSub").textContent=`Set ${idx+1} of ${ex.s} · target ${ex.lo}–${ex.hi} reps`;
+  { const mm=musclesFor(id), cm=$("#cMuscle");
+    if(cm){ if(mm.p.length||mm.s.length){ const tag=(x,c)=>`<span class="mtag ${c}">${esc(MNAME[x]||x)}</span>`;
+        cm.innerHTML=bodyMap(mm.p,mm.s)+`<div class="mlist">${mm.p.map(x=>tag(x,"pri")).join("")}</div>`;
+        cm.classList.add("live"); cm.style.setProperty("--k",".6"); cm.hidden=false; }
+      else { cm.innerHTML=""; cm.hidden=true; } } }
   $("#cTempo").innerHTML=[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s / rep</button>`).join("");
   const fw=$("#cFigWrap"); fw.dataset.fig=hasFig(id)?id:""; fw.dataset.mode="loop"; fw.dataset.anat="1"; fw.innerHTML="";
   drawW(); drawCounter(); pulse(.5); $("#counter").classList.add("on"); audio(); keepAwake(true); mountFigs();
@@ -2111,6 +2126,7 @@ function loop(now){
   const T=Math.max(1600,S.settings.tempo*1000), el=now-rep.t0, c=repCycle(el,T);
   pulse(.5+.5*c.t);
   if(figFrame++%2===0) paintFig($("#cFigWrap"),rep.exId,c.t, c.phase==="up"?1:c.phase==="down"?-1:0);
+  { const cm=$("#cMuscle"); if(cm) cm.style.setProperty("--k",(0.28+0.72*c.t).toFixed(2)); }
   if(c.phase!==rep._ph){
     if(c.phase==="hold") beep(660,70,.15); else if(c.phase==="down") beep(520,60,.12);
     rep._ph=c.phase;
@@ -2121,7 +2137,10 @@ function loop(now){
     beep(760,70,.16); if(rep.count<=3||rep.count%5===0||rep.count>=rep.target-1) say(String(rep.count)); }
   rep.raf=requestAnimationFrame(loop);
 }
-function stopLoop(){ rep.paused=true; cancelAnimationFrame(rep.raf); clearInterval(rep.cd); $("#cCue").textContent=""; }
+function stopLoop(){ rep.paused=true; cancelAnimationFrame(rep.raf); clearInterval(rep.cd); $("#cCue").textContent="";
+  const cm=$("#cMuscle"); if(cm) cm.style.setProperty("--k",".6"); }
+function mflash(){ const cm=$("#cMuscle"); if(!cm) return; cm.style.setProperty("--k","1");
+  clearTimeout(cm._t); cm._t=setTimeout(()=>cm.style.setProperty("--k",".6"),190); }
 function finishSet(){
   stopLoop(); rep.active=false;
   if(!S.current){ $("#counter").classList.remove("on"); return; }
@@ -2404,13 +2423,13 @@ document.addEventListener("input",e=>{
 });
 $("#cClose").onclick=()=>{ if(rep.count>0) finishSet(); else { stopLoop(); rep.active=false; $("#counter").classList.remove("on"); } };
 $("#cPlay").onclick=()=>{ if(rep.active&&!rep.paused){ stopLoop(); drawCounter(); } else startLoop(); };
-$("#cPlus").onclick=()=>{ rep.count++; drawCounter(); beep(760,60,.14); buzz(10);
+$("#cPlus").onclick=()=>{ rep.count++; drawCounter(); beep(760,60,.14); buzz(10); mflash();
   if(rep.count>=rep.target){ beep(980,220,.28); finishSet(); } };
 $("#cMinus").onclick=()=>{ rep.count=Math.max(0,rep.count-1); drawCounter(); buzz(8); };
 $("#cDone").onclick=finishSet;
 $("#cTap").onclick=()=>{ if(rep.active&&!rep.paused) return;
   rep.count++; drawCounter(); beep(760,60,.15); say(String(rep.count)); buzz(12);
-  pulse(1); setTimeout(()=>pulse(.5),170);
+  pulse(1); mflash(); setTimeout(()=>pulse(.5),170);
   if(rep.count>=rep.target){ beep(980,220,.28); finishSet(); } };
 
 function patchEx(id){ const el=document.querySelector(`.ex[data-ex="${id}"]`); if(!el) return;
