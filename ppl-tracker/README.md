@@ -128,3 +128,11 @@ a connected body silhouette with gradient-shaded muscles and fibre striations:
 
 More realism: connected silhouette (muscles no longer float), radial/linear gradients for
 volume, and striation lines on the big groups. Muscle differentiation stays exact.
+
+## Real anatomical body (replaces the hand-drawn one)
+
+The figure is now a proper muscular anatomy chart — front and back, with clearly visible,
+individually highlightable muscle groups — using the MIT-licensed muscle paths from
+`react-native-body-highlighter` (see `LICENSE-body-highlighter`). The working muscles light
+up (primary coral, assisting gold) and flex live in the counter; thumbnails show a mini
+body lighting the target muscle. The earlier hand-drawn silhouette is gone.
