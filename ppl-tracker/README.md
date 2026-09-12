@@ -146,3 +146,11 @@ body lighting the target muscle. The earlier hand-drawn silhouette is gone.
   *with its equipment/machine* through the full range of motion (direction arrow, joints,
   play/pause + tempo) — above the **muscles worked** anatomy map and the form cues.
 - Only the open exercise's movement animates (visibility-gated) to stay light on the phone.
+
+## Merged: movement + muscle in one animation
+
+The movement demo and the muscle highlight are now a single animation. The figure performs
+the exercise with its equipment through the full range of motion, and the working muscles
+glow on the body as it moves (brightening toward the contraction), with a direction arrow
+and joint dots. Used in both the exercise demo and the live rep counter (synced to your rep
+tempo). Exercises without a movement figure fall back to the static anatomy map.

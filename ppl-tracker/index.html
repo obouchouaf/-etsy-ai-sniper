@@ -465,7 +465,6 @@ svg.figsvg .body{stroke-width:5}
 <div id="counter">
   <div class="c-top">
     <div style="flex:1"><div class="nm" id="cName">—</div><div class="sb" id="cSub">—</div></div>
-    <button class="iconbtn tiny" id="cFlip" aria-label="Flip front / back"><svg class="ic sm"><use href="#i-restore"/></svg></button>
     <button class="iconbtn" id="cClose"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
   <div class="stage">
@@ -1369,8 +1368,8 @@ const MUSCLE={
 };
 const LOWER=new Set(["squat","quad_iso","hinge","ham_iso","glute","calves"]);
 function muscleSVG(P,slot,k){ const f=MUSCLE[slot]; if(!f) return "";
-  const strokes=f(P).map(pts=>_seg(pts,12,"mhi glow")+_seg(pts,5.5,"mhi")).join("");
-  return `<g class="mgrp" style="opacity:${(.28+.68*k).toFixed(2)}">${strokes}</g>`; }
+  const strokes=f(P).map(pts=>_seg(pts,16,"mhi glow")+_seg(pts,8,"mhi")).join("");
+  return `<g class="mgrp" style="opacity:${(.45+.55*k).toFixed(2)}">${strokes}</g>`; }
 function jointSVG(P,slot){ const pts=LOWER.has(slot)?[P.seg[3][1],P.seg[0][1],P.seg[3][0]]:[P.seg[4][1],P.seg[1][1],P.seg[4][0]];
   return pts.map(p=>`<circle class="joint" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.7"/>`).join(""); }
 function arrowSVG(d,t,slot,dir){ if(dir===0) return ""; const sgn=dir<0?-1:1;
@@ -1578,16 +1577,15 @@ function bodyOne(side,pri,sec,flex){ const P=_expandM(pri), Q=_expandM(sec);
     : `<svg class="mmap one" viewBox="44 88 650 1268" preserveAspectRatio="xMidYMid meet">${SIL_A}${_figM(BODY_A,P,Q,!!flex)}</svg>`; }
 function figIcon(id){ const m=musclesFor(id); const back=m.p[0]&&(MPOS[m.p[0]]||{}).f==="B"; return bodyOne(back?"B":"A",m.p,m.s); }
 function figBlock(id){
-  const m=musclesFor(id), q=CUES[id], hasM=m.p.length||m.s.length;
+  const m=musclesFor(id), q=CUES[id], has=hasFig(id);
+  if(!has&&!(m.p.length||m.s.length)) return "";
   const chips=[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("");
-  const move=hasFig(id)?`<div class="mus">The movement</div>
-    <div class="demo"><div class="stagebox figbox" data-fig="${id}" data-mode="loop" data-anat="move"></div>
+  const box=has?`<div class="demo"><div class="stagebox figbox" data-fig="${id}" data-mode="loop" data-anat="1"></div>
       <div class="ctl"><button class="step" data-figplay>${ic("i-pause","sm")}</button>
         <div class="dtempo">${chips}</div>
-        <button class="step" data-demo="${id}">${ic("i-book","sm")}</button></div></div>`:"";
-  const muscles=hasM?`<div class="mus" style="margin-top:2px">Muscles worked</div><div class="bodybox">${bodyMap(m.p,m.s,{})}</div>`:"";
-  if(!move&&!muscles) return "";
-  return `${move}${muscles}${anatomyLegend(id)}${q?q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join(""):""}`;
+        <button class="step" data-demo="${id}">${ic("i-book","sm")}</button></div></div>`
+    :`<div class="bodybox">${bodyMap(m.p,m.s,{})}</div>`;
+  return `${box}${anatomyLegend(id)}${q?q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join(""):""}`;
 }
 
 /* ═══════════ STATE + STORAGE ═══════════ */
@@ -2166,14 +2164,11 @@ function openCounter(id,idx){
   Object.assign(rep,{exId:id,idx,count:0,active:false,paused:true,phase:"up",target:ex.hi});
   $("#cName").textContent=ex.n;
   $("#cSub").textContent=`Set ${idx+1} of ${ex.s} · target ${ex.lo}–${ex.hi} reps`;
-  const _m=musclesFor(id), fw=$("#cFigWrap");
-  cSide=(_m.p[0]&&(MPOS[_m.p[0]]||{}).f==="B")?"B":"A";
-  fw.classList.add("flexbody","live"); fw.dataset.fig="";
-  fw.style.setProperty("--k",".5"); fw.style.setProperty("--flex","1.02");
-  fw.innerHTML=(_m.p.length||_m.s.length)?`<div class="turn">${bodyOne(cSide,_m.p,_m.s,true)}</div>`:"";
-  const _pl=$("#cPulse"); if(_pl) _pl.style.display="none";
+  const fw=$("#cFigWrap");
+  fw.classList.remove("flexbody","live"); fw.classList.add("figbox"); fw.dataset.fig=hasFig(id)?id:""; fw.dataset.mode="loop"; fw.dataset.anat="1"; fw.innerHTML="";
+  const _pl=$("#cPulse"); if(_pl) _pl.style.display="";
   $("#cTempo").innerHTML=[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s / rep</button>`).join("");
-  drawW(); drawCounter(); $("#counter").classList.add("on"); audio(); keepAwake(true);
+  drawW(); drawCounter(); pulse(.5); $("#counter").classList.add("on"); audio(); keepAwake(true); mountFigs();
 }
 function drawW(){ const st=S.current.entries[rep.exId][rep.idx];
   $("#cW").innerHTML=`<button class="step" data-cw="-1">${ic("i-minus","sm")}</button>
@@ -2201,7 +2196,8 @@ function startLoop(){
 function loop(now){
   if(!rep.active||rep.paused) return;
   const T=Math.max(1600,S.settings.tempo*1000), el=now-rep.t0, c=repCycle(el,T);
-  { const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",(0.12+0.88*c.t).toFixed(2)); fw.style.setProperty("--flex",(1+0.13*c.t).toFixed(3)); } }
+  pulse(.5+.5*c.t);
+  if(figFrame++%2===0) paintFig($("#cFigWrap"),rep.exId,c.t, c.phase==="up"?1:c.phase==="down"?-1:0);
   if(c.phase!==rep._ph){
     if(c.phase==="hold") beep(660,70,.15); else if(c.phase==="down") beep(520,60,.12);
     rep._ph=c.phase;
@@ -2213,9 +2209,9 @@ function loop(now){
   rep.raf=requestAnimationFrame(loop);
 }
 function stopLoop(){ rep.paused=true; cancelAnimationFrame(rep.raf); clearInterval(rep.cd); $("#cCue").textContent="";
-  const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02"); } }
-function mflash(){ const fw=$("#cFigWrap"); if(!fw) return; fw.style.setProperty("--k","1"); fw.style.setProperty("--flex","1.14");
-  clearTimeout(fw._t); fw._t=setTimeout(()=>{ fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02"); },200); }
+  const fw=$("#cFigWrap"); if(fw&&rep.exId&&hasFig(rep.exId)) paintFig(fw,rep.exId,0,0); }
+function mflash(){ const fw=$("#cFigWrap"); if(!fw||!rep.exId||!hasFig(rep.exId)) return; paintFig(fw,rep.exId,1,1);
+  clearTimeout(fw._t); fw._t=setTimeout(()=>paintFig(fw,rep.exId,0,0),210); }
 function finishSet(){
   stopLoop(); rep.active=false;
   if(!S.current){ $("#counter").classList.remove("on"); return; }
@@ -2307,10 +2303,10 @@ function confirmSheet(title,msg,ok,cb,danger){ _conf=cb;
     <div style="height:9px"></div><button class="btn ghost sm" data-closesheet>Cancel</button>`); }
 function openDemo(id){ const ex=getEx(id)||{}, q=CUES[id]||{c:[]};
   openSheet(`<h3 class="sheet-h">${esc(ex.n||id)}</h3>
-    ${hasFig(id)?`<div class="mus">The movement</div><div class="demo"><div class="stagebox figbox" style="height:200px" data-fig="${id}" data-mode="loop" data-anat="move"></div>
+    ${hasFig(id)?`<div class="demo"><div class="stagebox figbox" style="height:212px" data-fig="${id}" data-mode="loop" data-anat="1"></div>
       <div class="ctl"><button class="step" data-figplay>${ic("i-pause","sm")}</button>
-      <div class="dtempo">${[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("")}</div></div></div>`:""}
-    <div class="mus" style="margin-top:2px">Muscles worked</div><div class="bodybox">${bodyMap(musclesFor(id).p,musclesFor(id).s,{})}</div>
+      <div class="dtempo">${[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("")}</div></div></div>`
+      :`<div class="bodybox">${bodyMap(musclesFor(id).p,musclesFor(id).s,{})}</div>`}
     ${anatomyLegend(id)}
     ${q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join("")}
     ${ex.s?`<p class="sub" style="margin-top:10px">${ex.s} × ${ex.lo}–${ex.hi} · rest ${ex.rest}s · steps of ${ex.inc} ${U()}</p>`:""}
@@ -2496,8 +2492,7 @@ document.addEventListener("input",e=>{
   if(e.target.id==="progSel"){ S.ui.progressEx=e.target.value; save(); render(); }
 });
 $("#cClose").onclick=()=>{ if(rep.count>0) finishSet(); else { stopLoop(); rep.active=false; $("#counter").classList.remove("on"); } };
-$("#cFlip").onclick=()=>{ if(!S.current) return; cSide=cSide==="A"?"B":"A"; const m=musclesFor(rep.exId);
-  $("#cFigWrap").innerHTML=`<div class="turn">${bodyOne(cSide,m.p,m.s,true)}</div>`; buzz(8); };
+
 $("#cPlay").onclick=()=>{ if(rep.active&&!rep.paused){ stopLoop(); drawCounter(); } else startLoop(); };
 $("#cPlus").onclick=()=>{ rep.count++; drawCounter(); beep(760,60,.14); buzz(10); mflash();
   if(rep.count>=rep.target){ beep(980,220,.28); finishSet(); } };
