@@ -136,3 +136,13 @@ individually highlightable muscle groups — using the MIT-licensed muscle paths
 `react-native-body-highlighter` (see `LICENSE-body-highlighter`). The working muscles light
 up (primary coral, assisting gold) and flex live in the counter; thumbnails show a mini
 body lighting the target muscle. The earlier hand-drawn silhouette is gone.
+
+## Counter turntable + movement demo
+
+- **Counter:** the muscular body is now one large figure on a gentle 3D **turntable**
+  (perspective + drop shadow), with a flip button for front/back, and the worked muscle
+  **pumps** — contracts and brightens — in time with each rep (stronger, clearly tempo-based).
+- **Demo:** shows **how to do the movement** — an animated figure performing the exercise
+  *with its equipment/machine* through the full range of motion (direction arrow, joints,
+  play/pause + tempo) — above the **muscles worked** anatomy map and the form cues.
+- Only the open exercise's movement animates (visibility-gated) to stay light on the phone.

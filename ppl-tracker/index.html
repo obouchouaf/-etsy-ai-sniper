@@ -399,6 +399,21 @@ svg.mmap .lbl{font-size:27px;font-weight:800}
 .thumb svg.mmap.one .pri{fill:var(--accent)}
 .thumb svg.mmap.one .glow{display:none}
 @keyframes mflexS{0%,100%{transform:scale(1)}45%{transform:scale(1.05)}}
+
+/* ═══ counter: single body on a 3D turntable, muscle pumps with tempo ═══ */
+#cFigWrap.flexbody{position:absolute;width:min(62vw,236px);height:min(56vh,350px);perspective:950px}
+#cFigWrap.flexbody .turn{width:100%;height:100%;transform-style:preserve-3d;animation:turntable 5s ease-in-out infinite;will-change:transform}
+#cFigWrap.flexbody .turn svg.mmap{width:100%;height:100%;filter:drop-shadow(14px 16px 18px rgba(0,0,0,.55))}
+#cFigWrap.flexbody svg.mmap .pri{opacity:calc(.3 + .7*var(--k,1))}
+#cFigWrap.flexbody svg.mmap .pri.flex{transform-box:fill-box;transform-origin:center;transform:scale(var(--flex,1))}
+#cFigWrap.flexbody svg.mmap .glow{opacity:calc(.08 + .34*var(--k,1))}
+@keyframes turntable{0%{transform:rotateY(-25deg)}50%{transform:rotateY(25deg)}100%{transform:rotateY(-25deg)}}
+@media (prefers-reduced-motion:reduce){#cFigWrap.flexbody .turn{animation:none}}
+
+/* movement demo (figure + equipment) sits above the muscle map */
+.demo .stagebox{height:188px}
+.bodybox svg.mmap{height:210px}
+svg.figsvg .body{stroke-width:5}
 </style>
 </head>
 <body>
@@ -450,6 +465,7 @@ svg.mmap .lbl{font-size:27px;font-weight:800}
 <div id="counter">
   <div class="c-top">
     <div style="flex:1"><div class="nm" id="cName">—</div><div class="sb" id="cSub">—</div></div>
+    <button class="iconbtn tiny" id="cFlip" aria-label="Flip front / back"><svg class="ic sm"><use href="#i-restore"/></svg></button>
     <button class="iconbtn" id="cClose"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
   <div class="stage">
@@ -1381,7 +1397,7 @@ function figureSVG(id,t,cls,anat){
   if(d.rollerAt){ const ank=P.seg[3][2];
     roller=`<circle class="prop f" cx="${ank[0].toFixed(1)}" cy="${ank[1].toFixed(1)}" r="4"/>`; }
   let mus="",joints="",arrow="";
-  if(anat&&anat.slot){ mus=muscleSVG(P,anat.slot,t); joints=jointSVG(P,anat.slot); arrow=arrowSVG(d,t,anat.slot,anat.dir); }
+  if(anat&&anat.slot){ mus=anat.move?"":muscleSVG(P,anat.slot,t); joints=jointSVG(P,anat.slot); arrow=arrowSVG(d,t,anat.slot,anat.dir); }
   return `<g class="fig ${cls||""}">
     <g class="prop">${propSVG(d.props,P)}</g>${cable}
     <path class="far" d="${_d(P.seg[0])}"/><path class="far" d="${_d(P.seg[1])}"/>
@@ -1442,7 +1458,7 @@ function figOf(id){ const s=BY_ID[id]; if(s&&s.fig) return s.fig;
 function paintFig(el,id,t,dir){ if(!el)return; id=FIG[id]?id:figOf(id); if(!FIG[id])return;
   let anat=null;
   if(el.dataset&&el.dataset.anat){ const exid=el.dataset.fig, ex=getEx(exid)||BY_ID[exid]||{};
-    anat={slot:ex.slot||"",mus:(CUES[exid]||{}).m||ex.mus,dir:dir==null?1:dir}; }
+    anat={slot:ex.slot||"",mus:(CUES[exid]||{}).m||ex.mus,dir:dir==null?1:dir,move:el.dataset.anat==="move"}; }
   el.innerHTML=`<svg class="figsvg" viewBox="0 0 120 100" preserveAspectRatio="xMidYMid meet">${figureSVG(id,t,"",anat)}</svg>`; }
 function repCycle(el,T){ let p=el%T; const up=T*.34,ht=T*.14,dn=T*.42;
   if(p<up) return {t:ease(p/up),phase:"up"};
@@ -1463,8 +1479,9 @@ function mountFigs(){
   figAnim.clear();
   document.querySelectorAll(".figbox").forEach(el=>{
     const raw=el.dataset.fig; const id=raw&&FIG[raw]?raw:figOf(raw); if(!id||!FIG[id]) return;
-    if(el.dataset.mode==="loop"&&!RM){ figAnim.set(el,{id,t0:performance.now()}); paintFig(el,id,0); }
-    else paintFig(el,id,parseFloat(el.dataset.t||"1"));
+    const vis=!el.getBoundingClientRect||el.getBoundingClientRect().height>4;
+    if(el.dataset.mode==="loop"&&!RM&&vis){ figAnim.set(el,{id,t0:performance.now()}); paintFig(el,id,0); }
+    else paintFig(el,id, el.dataset.mode==="loop"?1:parseFloat(el.dataset.t||"1"));
   });
   if(figAnim.size&&!figRAF) figRAF=requestAnimationFrame(figTick);
 }
@@ -1555,22 +1572,22 @@ function anatomyLegend(id){ const ex=getEx(id)||BY_ID[id]||{}, q=CUES[id]||{};
     <div class="al"><span class="ak" style="background:var(--gold)"></span><div><b>How fast</b>About ${t}s a rep — drive up, squeeze at the top, then lower slow.</div></div>
   </div>`;
 }
-function bodyOne(side,pri,sec){ const P=_expandM(pri), Q=_expandM(sec);
+function bodyOne(side,pri,sec,flex){ const P=_expandM(pri), Q=_expandM(sec);
   return side==="B"
-    ? `<svg class="mmap one" viewBox="760 88 650 1268" preserveAspectRatio="xMidYMid meet">${SIL_B}${_figM(BODY_B,P,Q,false)}</svg>`
-    : `<svg class="mmap one" viewBox="44 88 650 1268" preserveAspectRatio="xMidYMid meet">${SIL_A}${_figM(BODY_A,P,Q,false)}</svg>`; }
+    ? `<svg class="mmap one" viewBox="760 88 650 1268" preserveAspectRatio="xMidYMid meet">${SIL_B}${_figM(BODY_B,P,Q,!!flex)}</svg>`
+    : `<svg class="mmap one" viewBox="44 88 650 1268" preserveAspectRatio="xMidYMid meet">${SIL_A}${_figM(BODY_A,P,Q,!!flex)}</svg>`; }
 function figIcon(id){ const m=musclesFor(id); const back=m.p[0]&&(MPOS[m.p[0]]||{}).f==="B"; return bodyOne(back?"B":"A",m.p,m.s); }
 function figBlock(id){
-  const m=musclesFor(id); if(!(m.p.length||m.s.length)) return "";
-  const q=CUES[id];
-  return `<div class="demo bodyanim" style="--tempo:${Math.max(1.4,S.settings.tempo)}s">
-      <div class="bodybox">${bodyMap(m.p,m.s,{labels:true,flex:true})}</div>
+  const m=musclesFor(id), q=CUES[id], hasM=m.p.length||m.s.length;
+  const chips=[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("");
+  const move=hasFig(id)?`<div class="mus">The movement</div>
+    <div class="demo"><div class="stagebox figbox" data-fig="${id}" data-mode="loop" data-anat="move"></div>
       <div class="ctl"><button class="step" data-figplay>${ic("i-pause","sm")}</button>
-        <div class="dtempo">${[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("")}</div>
-        <button class="step" data-demo="${id}">${ic("i-book","sm")}</button></div>
-    </div>
-    ${anatomyLegend(id)}
-    ${q?q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join(""):""}`;
+        <div class="dtempo">${chips}</div>
+        <button class="step" data-demo="${id}">${ic("i-book","sm")}</button></div></div>`:"";
+  const muscles=hasM?`<div class="mus" style="margin-top:2px">Muscles worked</div><div class="bodybox">${bodyMap(m.p,m.s,{})}</div>`:"";
+  if(!move&&!muscles) return "";
+  return `${move}${muscles}${anatomyLegend(id)}${q?q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join(""):""}`;
 }
 
 /* ═══════════ STATE + STORAGE ═══════════ */
@@ -2142,6 +2159,7 @@ function finishSession(){
 
 /* ═══════════ COUNTER ═══════════ */
 const rep={active:false,paused:true,target:10,count:0,phase:"up",t0:0,raf:0,exId:null,idx:0,cd:null};
+let cSide="A";
 function openCounter(id,idx){
   const ex=getEx(id); if(!ex||!S.current) return;
   const st=S.current.entries[id][idx];
@@ -2149,9 +2167,10 @@ function openCounter(id,idx){
   $("#cName").textContent=ex.n;
   $("#cSub").textContent=`Set ${idx+1} of ${ex.s} · target ${ex.lo}–${ex.hi} reps`;
   const _m=musclesFor(id), fw=$("#cFigWrap");
+  cSide=(_m.p[0]&&(MPOS[_m.p[0]]||{}).f==="B")?"B":"A";
   fw.classList.add("flexbody","live"); fw.dataset.fig="";
-  fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02");
-  fw.innerHTML=(_m.p.length||_m.s.length)?bodyMap(_m.p,_m.s,{labels:true,flex:true}):"";
+  fw.style.setProperty("--k",".5"); fw.style.setProperty("--flex","1.02");
+  fw.innerHTML=(_m.p.length||_m.s.length)?`<div class="turn">${bodyOne(cSide,_m.p,_m.s,true)}</div>`:"";
   const _pl=$("#cPulse"); if(_pl) _pl.style.display="none";
   $("#cTempo").innerHTML=[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s / rep</button>`).join("");
   drawW(); drawCounter(); $("#counter").classList.add("on"); audio(); keepAwake(true);
@@ -2182,7 +2201,7 @@ function startLoop(){
 function loop(now){
   if(!rep.active||rep.paused) return;
   const T=Math.max(1600,S.settings.tempo*1000), el=now-rep.t0, c=repCycle(el,T);
-  { const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",(0.2+0.8*c.t).toFixed(2)); fw.style.setProperty("--flex",(1+0.06*c.t).toFixed(3)); } }
+  { const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",(0.12+0.88*c.t).toFixed(2)); fw.style.setProperty("--flex",(1+0.13*c.t).toFixed(3)); } }
   if(c.phase!==rep._ph){
     if(c.phase==="hold") beep(660,70,.15); else if(c.phase==="down") beep(520,60,.12);
     rep._ph=c.phase;
@@ -2195,7 +2214,7 @@ function loop(now){
 }
 function stopLoop(){ rep.paused=true; cancelAnimationFrame(rep.raf); clearInterval(rep.cd); $("#cCue").textContent="";
   const fw=$("#cFigWrap"); if(fw){ fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02"); } }
-function mflash(){ const fw=$("#cFigWrap"); if(!fw) return; fw.style.setProperty("--k","1"); fw.style.setProperty("--flex","1.07");
+function mflash(){ const fw=$("#cFigWrap"); if(!fw) return; fw.style.setProperty("--k","1"); fw.style.setProperty("--flex","1.14");
   clearTimeout(fw._t); fw._t=setTimeout(()=>{ fw.style.setProperty("--k",".55"); fw.style.setProperty("--flex","1.02"); },200); }
 function finishSet(){
   stopLoop(); rep.active=false;
@@ -2288,9 +2307,10 @@ function confirmSheet(title,msg,ok,cb,danger){ _conf=cb;
     <div style="height:9px"></div><button class="btn ghost sm" data-closesheet>Cancel</button>`); }
 function openDemo(id){ const ex=getEx(id)||{}, q=CUES[id]||{c:[]};
   openSheet(`<h3 class="sheet-h">${esc(ex.n||id)}</h3>
-    <div class="demo bodyanim" style="--tempo:${Math.max(1.4,S.settings.tempo)}s"><div class="bodybox">${bodyMap(musclesFor(id).p,musclesFor(id).s,{labels:true,flex:true})}</div>
+    ${hasFig(id)?`<div class="mus">The movement</div><div class="demo"><div class="stagebox figbox" style="height:200px" data-fig="${id}" data-mode="loop" data-anat="move"></div>
       <div class="ctl"><button class="step" data-figplay>${ic("i-pause","sm")}</button>
-      <div class="dtempo">${[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("")}</div></div></div>
+      <div class="dtempo">${[2,3,4,5].map(t=>`<button class="chip ${S.settings.tempo===t?"on":""}" data-tempo="${t}">${t}s</button>`).join("")}</div></div></div>`:""}
+    <div class="mus" style="margin-top:2px">Muscles worked</div><div class="bodybox">${bodyMap(musclesFor(id).p,musclesFor(id).s,{})}</div>
     ${anatomyLegend(id)}
     ${q.c.map((c,i)=>`<div class="cueline"><b>${i+1}</b><span>${esc(c)}</span></div>`).join("")}
     ${ex.s?`<p class="sub" style="margin-top:10px">${ex.s} × ${ex.lo}–${ex.hi} · rest ${ex.rest}s · steps of ${ex.inc} ${U()}</p>`:""}
@@ -2339,8 +2359,9 @@ document.addEventListener("click",ev=>{
   if(!t) return; const D=t.dataset;
 
   if(D.demo!==undefined&&D.demo!==""){ ev.preventDefault(); openDemo(D.demo); return; }
-  if("figplay" in D){ const box=t.closest(".demo"); if(box){ const pausing=box.classList.toggle("paused");
-    t.querySelector("use").setAttribute("href",pausing?"#i-play":"#i-pause"); } return; }
+  if("figplay" in D){ const box=t.closest(".demo").querySelector(".figbox");
+    if(box){ const on=box.dataset.mode==="loop"; box.dataset.mode=on?"manual":"loop";
+      t.querySelector("use").setAttribute("href",on?"#i-play":"#i-pause"); mountFigs(); } return; }
   if("undo" in D){ if(_undo) _undo(); _undo=null; $("#toast").classList.remove("on"); return; }
   if(D.rir){ const [id,j]=D.rir.split("|"); const s=S.current.entries[id][+j];
     const seq=["","3","2","1","0"]; s.rir=seq[(seq.indexOf(s.rir||"")+1)%seq.length]; buzz(6); save(); patchEx(id); return; }
@@ -2381,7 +2402,7 @@ document.addEventListener("click",ev=>{
   if(D.start){ openBuilder(D.start); return; }
   if(D.open!==undefined&&D.open!==""){ const card=t.closest(".ex");
     S.current.open=S.current.open===D.open?null:D.open; save();
-    document.querySelectorAll(".ex").forEach(c=>c.classList.toggle("open",c.dataset.ex===S.current.open)); return; }
+    document.querySelectorAll(".ex").forEach(c=>c.classList.toggle("open",c.dataset.ex===S.current.open)); mountFigs(); return; }
   if(D.tick){ const [id,j]=D.tick.split("|"); const st=S.current.entries[id][+j]; const ex=getEx(id);
     const prev=Object.assign({},st);
     st.done=!st.done;
@@ -2475,6 +2496,8 @@ document.addEventListener("input",e=>{
   if(e.target.id==="progSel"){ S.ui.progressEx=e.target.value; save(); render(); }
 });
 $("#cClose").onclick=()=>{ if(rep.count>0) finishSet(); else { stopLoop(); rep.active=false; $("#counter").classList.remove("on"); } };
+$("#cFlip").onclick=()=>{ if(!S.current) return; cSide=cSide==="A"?"B":"A"; const m=musclesFor(rep.exId);
+  $("#cFigWrap").innerHTML=`<div class="turn">${bodyOne(cSide,m.p,m.s,true)}</div>`; buzz(8); };
 $("#cPlay").onclick=()=>{ if(rep.active&&!rep.paused){ stopLoop(); drawCounter(); } else startLoop(); };
 $("#cPlus").onclick=()=>{ rep.count++; drawCounter(); beep(760,60,.14); buzz(10); mflash();
   if(rep.count>=rep.target){ beep(980,220,.28); finishSet(); } };
